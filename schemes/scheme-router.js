@@ -51,7 +51,7 @@ router.post('/', (req, res) => {
 
   Schemes.add(schemeData)
   .then(scheme => {
-    res.status(201).json(scheme);
+    res.status(201).json({...schemeData, id: scheme[0]});
   })
   .catch (err => {
     res.status(500).json({ message: 'Failed to create new scheme' });
@@ -87,7 +87,7 @@ router.put('/:id', (req, res) => {
     if (scheme) {
       Schemes.update(changes, id)
       .then(updatedScheme => {
-        res.json(updatedScheme);
+        res.json({...changes, id: id});
       });
     } else {
       res.status(404).json({ message: 'Could not find scheme with given id' });
@@ -101,17 +101,28 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
 
-  Schemes.remove(id)
-  .then(deleted => {
-    if (deleted) {
-      res.json({ removed: deleted });
-    } else {
-      res.status(404).json({ message: 'Could not find scheme with given id' });
-    }
+  Schemes.findById(id)
+  .then(scheme=>{
+    Schemes.remove(id)
+    .then(deleted => {
+      if (deleted) {
+        res.json({ 
+          removed: deleted,
+          removedScheme: scheme
+        });
+      } else {
+        res.status(404).json({ message: 'Could not find scheme with given id' });
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ message: 'Failed to delete scheme' });
+    });
   })
-  .catch(err => {
-    res.status(500).json({ message: 'Failed to delete scheme' });
-  });
+  .catch(err=>{
+    res.status(500).json({errorMessage: 'Failed to find id to delete.'})
+  })
+
+  
 });
 
 module.exports = router;
